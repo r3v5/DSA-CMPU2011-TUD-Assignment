@@ -255,6 +255,9 @@ class Graph {
 
     public void breadthFirst(int s) {
         int u;
+        int queueSize;
+        int traversalLevel = 1;
+
         for (u = 1; u <= V; ++u) {
             colour[u] = C.White;
             System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
@@ -273,32 +276,43 @@ class Graph {
         displayQueue(queue);
 
         while (!queue.isEmpty()) {
-            u = queue.remove();
+            queueSize = queue.size();
+            System.out.println("Current traversal level: " + traversalLevel);
+            for (int i = 0; i < queueSize; ++i) {
+                u = queue.remove();
 
-            if (parent[u] != -1) {
-                System.out.println("Visited vertex " + toChar(u) + " from " + toChar(parent[u]) + 
-                                    " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + " edge/edges" + 
-                                    " | Vertex " + toChar(u) + " was marked as Grey");
-            } else {
-                System.out.println("\nBF just visited starting vertex " + toChar(u) + 
-                                    " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + " edges/edges" + 
-                                    " | Vertex " + toChar(u) + " was marked as Grey");
-            }
-            
-            for (Node v = adj[u]; v != z; v = v.next) {
-                if (colour[v.vertex] == C.White) {
-                    colour[v.vertex] = C.Grey;
-                    d[v.vertex] = d[u] + 1;
-                    parent[v.vertex] = u;
-                    queue.add(v.vertex);
-                    System.out.println("Vertex " + toChar(v.vertex) + " is enqued to the queue | ");
-                    displayQueue(queue);
+                if (parent[u] != -1) {
+                    System.out.println("Visited vertex " + toChar(u) + " from " + toChar(parent[u]) + 
+                                        " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + (d[u] == 1 ? " edge" : " edges") + 
+                                        " | Vertex " + toChar(u) + " was marked as Grey");
+                } else {
+                    System.out.println("\nBF just visited starting vertex " + toChar(u) + 
+                                        " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + (d[u] == 1 ? " edge" : " edges") + 
+                                        " | Vertex " + toChar(u) + " was marked as Grey");
                 }
+                
+                for (Node v = adj[u]; v != z; v = v.next) {
+                    if (colour[v.vertex] == C.White) {
+                        colour[v.vertex] = C.Grey;
+                        d[v.vertex] = d[u] + 1;
+                        parent[v.vertex] = u;
+                        queue.add(v.vertex);
+                        System.out.println("Vertex " + toChar(v.vertex) + " is enqued to the queue | ");
+                        displayQueue(queue);
+                    }
+                }
+
+                colour[u] = C.Black;
+                System.out.println("Vertex " + toChar(u) + " is marked as Black\n");
             }
 
-            colour[u] = C.Black;
-            System.out.println("Vertex " + toChar(u) + " is marked as Black\n");
+            // Only move to the next level if more nodes were added
+            if (!queue.isEmpty()) {
+                ++traversalLevel;
+            }
         }
+        
+        System.out.println("Total traversal levels in graph processed: " + traversalLevel);
     }
 
     // display vertices as characters in current queue
@@ -309,9 +323,21 @@ class Graph {
         }
         System.out.println("]");
     }
+
+    // display traversal tree to see from what vertex we reached current vertex
+    public void displayTraversalTree(int source) {
+        System.out.println("\nTraversal Tree (parent array):");
+        for (int u = 1; u <= V; ++u) {
+            if (parent[u] != -1)
+                System.out.println(toChar(u) + " ← " + toChar(parent[u]));
+            else if (u == source)
+                System.out.println(toChar(u) + " ← Root of tree");
+            else
+                System.out.println(toChar(u) + " ← - (not reachable from source)");
+        }
+    }
     
     
- 
     
 	public void MST_Prim(int s)
 	{
@@ -373,9 +399,11 @@ public class GraphSolution {
        
         System.out.print("\n1) Preparing for DFS Traversal Cormen's version with colouring\n"); 
         g.DF(s);
+        g.displayTraversalTree(s);
 
         System.out.print("\n2) Preparing for BFS Traversal Cormen's version with colouring\n"); 
         g.breadthFirst(s);
+        g.displayTraversalTree(s);
        //g.MST_Prim(s);   
        //g.SPT_Dijkstra(s);               
     }
