@@ -3,6 +3,7 @@
 
 import java.io.*;
 import java.util.Queue;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 enum C {White, Grey, Black};
@@ -112,7 +113,7 @@ class Graph {
      */
     private int time;
 
-    // for stroring DFS forest (or tree), where each node points back to the node that discovered it.
+    // for stroring predecessor during DFS/BFS forest (or tree) traversal, where each node points back to the node that discovered it.
     private int[] parent;
 
     /*
@@ -122,10 +123,13 @@ class Graph {
         2. the second timestamp - f records when the search finishes examining’s adjacency list (and blackens). 
      */
 
-    // timestamps when mark node as GREY 
+    /*
+    * In DFS: d[u] stores the **discovery time** of vertex u when mark node u as GREY
+    * In BFS: d[u] stores the **distance** from the source vertex s to vertex u (i.e., number of edges)
+    */
     private int[] d;
 
-    // timestamps when mark node as BLACK
+    // timestamps when mark node as BLACK used in DFS
     private int[] f;
     
     
@@ -204,38 +208,40 @@ class Graph {
     // method to initialise Depth First Traversal of Graph (Cormem's version)
     public void DF(int s) 
     {
-        for (int v = 1; v <= V; ++v) {
-            colour[v] = C.White;
-            parent[v] = -1;
+        for (int u = 1; u <= V; ++u) {
+            colour[u] = C.White;
+            System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
+            parent[u] = -1;
         }
 
-        System.out.print("\nDepth First Graph Traversal\n");
-        System.out.println("Starting with Vertex " + toChar(s));
+        System.out.print("\nStarting Depth First Graph Traversal Cormen's version\n");
+        System.out.println("Starting with Vertex " + toChar(s) + " prompted by user");
 
-         // start from vertex s, with 0 as the "previous" node
-        dfVisit(0, s);
+        // start from vertex s, with 0 as the "previous" node
+        time = 0;
+        dfVisit(s);
     }
 
-    // Recursive Depth First Traversal for adjacency list (Cormem's version)
-    private void dfVisit( int prev, int u)
+    // Recursive Depth First Traversal for adjacency lists and colouring (Cormem's version)
+    private void dfVisit(int u)
     {
         ++time;
         d[u] = time;
         colour[u] = C.Grey;
 
         if (parent[u] != -1) {
-            System.out.println("Visited vertex " + toChar(u) + " from " + toChar(prev) + 
-                               " | Discovery time: " + d[u]);
+            System.out.println("Visited vertex " + toChar(u) + " from " + toChar(parent[u]) + 
+                               " | Discovery time: " + d[u] + " | Vertex " + toChar(u) + " is marked as Grey");
         } else {
             System.out.println("\nDF just visited starting vertex " + toChar(u) + 
-                               " | Discovery time: " + d[u]);
+                               " | Discovery time: " + d[u] + " | Vertex " + toChar(u) + " is marked as Grey");
         }
 
         // process all the vertices u connected to vertex v
         for (Node v = adj[u]; v != z; v = v.next) {
             if (colour[v.vertex] == C.White) {
                 parent[v.vertex] = u;
-                dfVisit(u, v.vertex); 
+                dfVisit(v.vertex); 
             }
         }
 
@@ -244,10 +250,68 @@ class Graph {
         f[u] = time;
 
         System.out.println("Finished vertex " + toChar(u) + 
-                       " | Finish time: " + f[u]);
+                       " | Finish time: " + f[u] + " | Vertex " + toChar(u) + " is marked as Black");
     }
 
+    public void breadthFirst(int s) {
+        int u;
+        for (u = 1; u <= V; ++u) {
+            colour[u] = C.White;
+            System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
+            parent[u] = -1;
+        }
 
+        colour[s] = C.Grey;
+        d[s] = 0;
+        parent[s] = -1;
+
+        Queue<Integer> queue = new LinkedList<>();
+        queue.add(s);
+
+        System.out.println("\nStarting Breadth First Traversal Cormen's version\n");
+        System.out.println("Starting with Vertex " + toChar(s) + " prompted by user");
+        displayQueue(queue);
+
+        while (!queue.isEmpty()) {
+            u = queue.remove();
+
+            if (parent[u] != -1) {
+                System.out.println("Visited vertex " + toChar(u) + " from " + toChar(parent[u]) + 
+                                    " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + " edge/edges" + 
+                                    " | Vertex " + toChar(u) + " was marked as Grey");
+            } else {
+                System.out.println("\nBF just visited starting vertex " + toChar(u) + 
+                                    " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + " edges/edges" + 
+                                    " | Vertex " + toChar(u) + " was marked as Grey");
+            }
+            
+            for (Node v = adj[u]; v != z; v = v.next) {
+                if (colour[v.vertex] == C.White) {
+                    colour[v.vertex] = C.Grey;
+                    d[v.vertex] = d[u] + 1;
+                    parent[v.vertex] = u;
+                    queue.add(v.vertex);
+                    System.out.println("Vertex " + toChar(v.vertex) + " is enqued to the queue | ");
+                    displayQueue(queue);
+                }
+            }
+
+            colour[u] = C.Black;
+            System.out.println("Vertex " + toChar(u) + " is marked as Black\n");
+        }
+    }
+
+    // display vertices as characters in current queue
+    private void displayQueue(Queue<Integer> queue) {
+        System.out.print("Queue now: [ ");
+        for (int v : queue) {
+            System.out.print(toChar(v) + " ");
+        }
+        System.out.println("]");
+    }
+    
+    
+ 
     
 	public void MST_Prim(int s)
 	{
@@ -291,10 +355,12 @@ class Graph {
 public class GraphSolution {
     public static void main(String[] args) throws IOException
     {
+        System.out.print("Student name: Ian Miller\n");
+        System.out.print("Student number: D23124620\n");
         Scanner scanner = new Scanner(System.in);
 
         // Prompt for file name
-        System.out.print("Enter graph file name: ");
+        System.out.print("\nEnter graph file name (eg. wGraph.txt): ");
         String fname = scanner.nextLine();
 
         // Prompt for starting vertex
@@ -304,9 +370,12 @@ public class GraphSolution {
         // Load and construct graph
         Graph g = new Graph(fname);
         g.display();
-            
-       g.DF(s);
-       //g.breadthFirst(s);
+       
+        System.out.print("\n1) Preparing for DFS Traversal Cormen's version with colouring\n"); 
+        g.DF(s);
+
+        System.out.print("\n2) Preparing for BFS Traversal Cormen's version with colouring\n"); 
+        g.breadthFirst(s);
        //g.MST_Prim(s);   
        //g.SPT_Dijkstra(s);               
     }
