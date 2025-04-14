@@ -8,67 +8,156 @@ import java.util.Scanner;
 
 enum C {White, Grey, Black};
 
-class Heap
-{
-    private int[] a;	   // heap array
-    private int[] hPos;	   // hPos[h[k]] == k
-    private int[] dist;    // dist[v] = priority of v
+/*
+ * Implementation of Min Heap
+ */
+class Heap {
+    // heap array
+    private int[] a;	
+    
+    // hPos[h[k]] == k, tracks the positions of elements in the heap
+    private int[] hPos;
 
-    private int N;         // heap size
+    // dist[v] = priority of v, stores the distances (priority)
+    private int[] dist;    
+
+    // heap size
+    private int N;      
    
     // The heap constructor gets passed from the Graph:
     //    1. maximum heap size
     //    2. reference to the dist[] array
     //    3. reference to the hPos[] array
-    public Heap(int maxSize, int[] _dist, int[] _hPos) 
-    {
+    public Heap(int maxSize, int[] _dist, int[] _hPos) {
         N = 0;
+
+        // Heap array with maxSize + 1 for 1-based indexing
         a = new int[maxSize + 1];
-        dist = _dist;
+
+        // hPos array to track positions
         hPos = _hPos;
+
+        // dist array for priorities
+        dist = _dist; 
+        
+        // start with i = 1 because 1-indexed array for heap. The position by index 0 is dummy element
+        for (int i = 1; i <= maxSize; i++) {
+
+            // Initialize positions to -1 (not in the heap)
+            hPos[i] = -1;  
+
+            // Initialize distances to max value
+            dist[i] = Integer.MAX_VALUE;
+        }
     }
 
 
-    public boolean isEmpty() 
-    {
+    // check if the heap is empty
+    public boolean isEmpty() {
         return N == 0;
     }
 
 
-    public void siftUp( int k) 
-    {
+    /*
+    * siftUp from position k. The node value at position k
+    * may be greater than its parent at k/2
+    * k is a position in the heap array a
+    */
+    public void siftUp(int k) {   
+        // vertex on a heap after insertion (typically at the very end)
         int v = a[k];
 
-        // code yourself
-        // must use hPos[] and dist[] arrays
+        // priority of the current vertex
+        int vDist = dist[v]; 
+
+        // move up current vertex while not reached dummy element by index 0 and priority is less than parent's priority (since min heap)
+        while (k > 1 && vDist < dist[a[k / 2]]) {
+
+            // change current vertex with parent
+            a[k] = a[k / 2]; 
+
+            // update the position of parent on the heap
+            hPos[a[k]] = k;
+
+            // go to the next parent
+            k /= 2;
+        }
+
+        // finally place the vertex into the heap array by index where we stopped
+        a[k] = v;
+
+        // update the position on the heap for current vertex we sifted up
+        hPos[v] = k;
     }
 
 
-    public void siftDown( int k) 
-    {
-        int v, j;
-       
-        v = a[k];  
+    /*
+     * Key of node at position k may be less than that of its children and may need to be moved down some levels
+     * k is a position in the heap array a
+     */
+    public void siftDown(int k) {
+        int j;
+
+        // vertex on a heap we want to sift down
+        int v = a[k];
+
+        // priority of the current vertex
+        int vDist = dist[v];
+
+        // go while node at pos k has a left child node
+        while (2 * k <= N) {
+
+            // index of left child on the heap
+            j = 2 * k;
+
+            // Choose the smaller child to compare with: 
+            // if right child exists and has lower priority than left child, increment j to point to right child (since min heap)
+            if (j < N && dist[a[j]] > dist[a[j + 1]]) {
+                ++j;
+            }
+            
+            // Stop the loop if current vertex's priority is already less than or equal to its child's priority (since min heap)
+            if (vDist <= dist[a[j]]) {
+                break;
+            }
+            
+            // change current vertex with child (could be left or right)
+            a[k] = a[j];
+
+            // update the position of child on the heap
+            hPos[a[k]] = k;
+            
+            // go to the child and start sifting down from him
+            k = j;
+        }
         
-        // code yourself 
-        // must use hPos[] and dist[] arrays
+        // place the vertex into the heap array by index where we stopped
+        a[k] = v;
+
+        // update the position on the heap for current vertex we sifted down
+        hPos[v] = k;
     }
 
-
-    public void insert( int x) 
-    {
+    // insert the vertex at the end of the heap
+    public void insert(int x) {
         a[++N] = x;
-        siftUp( N);
+
+        // move up the vertex from the last position on the heap
+        siftUp(N);
     }
 
 
-    public int remove() 
-    {   
+    public int remove() {   
+        // Save the root (min)
         int v = a[1];
-        hPos[v] = 0; // v is no longer in heap
-        a[N+1] = 0;  // put null node into empty spot
-        
+
+        // v is no longer in heap
+        hPos[v] = 0;
+
+        // Move last element to root, shrink heap
         a[1] = a[N--];
+
+        // move down the new root
         siftDown(1);
         
         return v;
@@ -95,7 +184,7 @@ class Graph {
     // E = number of edges
     private int E;
 
-    // adj[] is the adjacency lists array
+    // adj[] is the adjacency list array of nodes. This is an array of linked lists.
     private Node[] adj;
 
     // sentinel node
@@ -134,8 +223,7 @@ class Graph {
     
     
     // default constructor
-    public Graph(String graphFile)  throws IOException
-    {
+    public Graph(String graphFile)  throws IOException {
         int u, v;
         int e, wgt;
 
@@ -183,12 +271,12 @@ class Graph {
             adj[v] = new Node(u, wgt, adj[v]);
         }	   
         
+        System.out.println("\nBuilding adjacency list representation, which is very efficient for sparse graphs.");
         reader.close();
     }
    
     // convert vertex into char for pretty printing
-    private char toChar(int u)
-    {  
+    private char toChar(int u) {  
         return (char)(u + 64);
     }
     
@@ -206,12 +294,11 @@ class Graph {
     }
 
     // method to initialise Depth First Traversal of Graph (Cormem's version)
-    public void DF(int s) 
-    {
+    public void DF(int s) {
         for (int u = 1; u <= V; ++u) {
             colour[u] = C.White;
             System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
-            parent[u] = -1;
+            parent[u] = 0;
         }
 
         System.out.print("\nStarting Depth First Graph Traversal Cormen's version\n");
@@ -223,13 +310,12 @@ class Graph {
     }
 
     // Recursive Depth First Traversal for adjacency lists and colouring (Cormem's version)
-    private void dfVisit(int u)
-    {
+    private void dfVisit(int u) {
         ++time;
         d[u] = time;
         colour[u] = C.Grey;
 
-        if (parent[u] != -1) {
+        if (parent[u] != 0) {
             System.out.println("Visited vertex " + toChar(u) + " from " + toChar(parent[u]) + 
                                " | Discovery time: " + d[u] + " | Vertex " + toChar(u) + " is marked as Grey");
         } else {
@@ -255,18 +341,18 @@ class Graph {
 
     public void breadthFirst(int s) {
         int u;
-        int queueSize;
+        int currQueueSize;
         int traversalLevel = 1;
 
         for (u = 1; u <= V; ++u) {
             colour[u] = C.White;
             System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
-            parent[u] = -1;
+            parent[u] = 0;
         }
 
         colour[s] = C.Grey;
         d[s] = 0;
-        parent[s] = -1;
+        parent[s] = 0;
 
         Queue<Integer> queue = new LinkedList<>();
         queue.add(s);
@@ -276,12 +362,12 @@ class Graph {
         displayQueue(queue);
 
         while (!queue.isEmpty()) {
-            queueSize = queue.size();
+            currQueueSize = queue.size();
             System.out.println("Current traversal level: " + traversalLevel);
-            for (int i = 0; i < queueSize; ++i) {
+            for (int i = 0; i < currQueueSize; ++i) {
                 u = queue.remove();
 
-                if (parent[u] != -1) {
+                if (parent[u] != 0) {
                     System.out.println("Visited vertex " + toChar(u) + " from " + toChar(parent[u]) + 
                                         " | Distance from source " + toChar(s) + " to vertex " + toChar(u) + " is " + d[u] + (d[u] == 1 ? " edge" : " edges") + 
                                         " | Vertex " + toChar(u) + " was marked as Grey");
@@ -306,7 +392,7 @@ class Graph {
                 System.out.println("Vertex " + toChar(u) + " is marked as Black\n");
             }
 
-            // Only move to the next level if more nodes were added
+            // Only move to the next level if more nodes were enqued to the Queue
             if (!queue.isEmpty()) {
                 ++traversalLevel;
             }
@@ -328,7 +414,7 @@ class Graph {
     public void displayTraversalTree(int source) {
         System.out.println("\nTraversal Tree (parent array):");
         for (int u = 1; u <= V; ++u) {
-            if (parent[u] != -1)
+            if (parent[u] != 0)
                 System.out.println(toChar(u) + " ← " + toChar(parent[u]));
             else if (u == source)
                 System.out.println(toChar(u) + " ← Root of tree");
@@ -339,11 +425,10 @@ class Graph {
     
     
     
-	public void MST_Prim(int s)
-	{
+	public void MST_Prim(int s) {
         int v, u;
         int wgt, wgt_sum = 0;
-        int[]  dist, parent, hPos;
+        int[] dist, parent, hPos;
         Node t;
 
         //code here
@@ -363,24 +448,21 @@ class Graph {
                   		
 	}
     
-    public void showMST()
-    {
+    public void showMST() {
             System.out.print("\n\nMinimum Spanning tree parent array is:\n");
             for(int v = 1; v <= V; ++v)
                 System.out.println(toChar(v) + " -> " + toChar(mst[v]));
             System.out.println("");
     }
 
-    public void SPT_Dijkstra(int s)
-    {
+    public void SPT_Dijkstra(int s) {
 
     }
 
 }
 
 public class GraphSolution {
-    public static void main(String[] args) throws IOException
-    {
+    public static void main(String[] args) throws IOException {
         System.out.print("Student name: Ian Miller\n");
         System.out.print("Student number: D23124620\n");
         Scanner scanner = new Scanner(System.in);
@@ -400,10 +482,12 @@ public class GraphSolution {
         System.out.print("\n1) Preparing for DFS Traversal Cormen's version with colouring\n"); 
         g.DF(s);
         g.displayTraversalTree(s);
+        System.out.print("\nTime complexity: O(V + E), Space complexity: O(V)\n"); 
 
         System.out.print("\n2) Preparing for BFS Traversal Cormen's version with colouring\n"); 
         g.breadthFirst(s);
         g.displayTraversalTree(s);
+        System.out.print("\nTime complexity: O(V + E), Space complexity: O(V)\n"); 
        //g.MST_Prim(s);   
        //g.SPT_Dijkstra(s);               
     }
