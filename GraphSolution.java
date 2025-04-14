@@ -39,16 +39,6 @@ class Heap {
 
         // dist array for priorities
         dist = _dist; 
-        
-        // start with i = 1 because 1-indexed array for heap. The position by index 0 is dummy element
-        for (int i = 1; i <= maxSize; i++) {
-
-            // Initialize positions to -1 (not in the heap)
-            hPos[i] = -1;  
-
-            // Initialize distances to max value
-            dist[i] = Integer.MAX_VALUE;
-        }
     }
 
 
@@ -146,23 +136,25 @@ class Heap {
         siftUp(N);
     }
 
-
     public int remove() {   
         // Save the root (min)
         int v = a[1];
 
         // v is no longer in heap
         hPos[v] = 0;
-
-        // Move last element to root, shrink heap
+    
+        // Move last element to root and shrink heap
         a[1] = a[N--];
-
-        // move down the new root
-        siftDown(1);
         
+        // If heap is not empty
+        if (!isEmpty()) {
+            // update the position in heap of new root
+            hPos[a[1]] = 1;
+            siftDown(1);
+        }
+
         return v;
     }
-
 }
 
 class Graph {
@@ -251,6 +243,9 @@ class Graph {
         parent = new int[V+1];
         d = new int[V+1];
         f = new int[V+1];
+
+        // create mst array for storing MST
+        mst = new int[V + 1];
         
        // read the edges
         System.out.println("Reading edges from text file");
@@ -344,12 +339,14 @@ class Graph {
         int currQueueSize;
         int traversalLevel = 1;
 
+        // Mark all vertices as white at the beginning
         for (u = 1; u <= V; ++u) {
             colour[u] = C.White;
             System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
             parent[u] = 0;
         }
 
+        // Run BFS from source s
         colour[s] = C.Grey;
         d[s] = 0;
         parent[s] = 0;
@@ -362,8 +359,12 @@ class Graph {
         displayQueue(queue);
 
         while (!queue.isEmpty()) {
+            // Get the size of the current queue to be able to count traversal levels further
             currQueueSize = queue.size();
+
             System.out.println("Current traversal level: " + traversalLevel);
+
+            // Examine each vertex in the queue
             for (int i = 0; i < currQueueSize; ++i) {
                 u = queue.remove();
 
@@ -377,7 +378,9 @@ class Graph {
                                         " | Vertex " + toChar(u) + " was marked as Grey");
                 }
                 
+                // For each neighbour v of u
                 for (Node v = adj[u]; v != z; v = v.next) {
+                    // If v is not visited yet, mark as Grey and enqueue to the queue
                     if (colour[v.vertex] == C.White) {
                         colour[v.vertex] = C.Grey;
                         d[v.vertex] = d[u] + 1;
@@ -388,11 +391,12 @@ class Graph {
                     }
                 }
 
+                // Mark u as Black since processed all adjacent neighbours
                 colour[u] = C.Black;
                 System.out.println("Vertex " + toChar(u) + " is marked as Black\n");
             }
 
-            // Only move to the next level if more nodes were enqued to the Queue
+            // Only move to the next level if more nodes were enqueued to the Queue
             if (!queue.isEmpty()) {
                 ++traversalLevel;
             }
@@ -423,42 +427,206 @@ class Graph {
         }
     }
     
-    
-    
-	public void MST_Prim(int s) {
-        int v, u;
-        int wgt, wgt_sum = 0;
-        int[] dist, parent, hPos;
-        Node t;
 
-        //code here
+	public void MST_Prim(int s) {
+        int v;
+        int totalEdgesInMst = 0;
+        int wgtSum = 0;
+        int[] dist = new int[V + 1];
+        int[] parent = new int[V + 1]; 
+        int[] hPos = new int[V + 1];
+        Node u;
+
+        // Initialize dist, parent, and hPos arrays (1-indexed arrays)
+        for (v = 1; v <= V; ++v) {
+            dist[v] = Integer.MAX_VALUE;
+            parent[v] = 0;
+            hPos[v] = 0;
+        }
         
-        //dist[s] = 0;
+        // Distance to root s is 0
+        dist[s] = 0;
+
+        Heap h =  new Heap(V, dist, hPos);
+
+        // Start from vertex s
+        h.insert(s);
+
+        System.out.println("\nStarting MST Prim’s algorithm: \n");
+        System.out.println("Start from source vertex: " + toChar(s) + 
+                           ", dist = " + dist[s] + 
+                           ", hPos[s] = " + hPos[s] +
+                           ", current total MST weight = " + wgtSum);
         
-        //Heap h =  new Heap(V, dist, hPos);
-        //h.insert(s);
-        
-        //while ( ...)  
-        //{
-            // most of alg here
+        while (!h.isEmpty()) {
+
+            // pop the vertex with minimal weigth from the heap
+            v = h.remove();
+
+            // increase the weight sum by the priority of current vertex
+            wgtSum += dist[v];
+
+            // mark current vertex as presented in MST (set negative priority)
+            dist[v] = -dist[v];
             
-       // }
-        System.out.print("\n\nWeight of MST = " + wgt_sum + "\n");
+            // if we added non source vertex, increase the total number of edges constructed in MST
+            if (v != s) {
+                ++totalEdgesInMst;
+            }
+
+            System.out.println("Removed from heap: " + "vertex " + toChar(v) + 
+                           ", dist = " + dist[v] + 
+                           ", current total MST weight = " + wgtSum);
+            
+            // For each neighbor u of v
+            for (u = adj[v]; u != z; u = u.next) {
+
+                // If not presented in MST and found an edge with weight that is smaller than current vertex's weight 
+                // Negative priority of vertext means already added to MST
+                if (dist[u.vertex] > 0 && u.wgt < dist[u.vertex]) {
+                    dist[u.vertex] = u.wgt;
+                    parent[u.vertex] = v;
+                
+                    // Not yet in heap
+                    if (hPos[u.vertex] == 0) {
+                        h.insert(u.vertex);
+                    } else {
+                        // if in the heap, should be sifted up since the priority was updated by new minimal weight
+                        System.out.println("Called siftUp() on vertex: " + toChar(u.vertex));
+                        h.siftUp(hPos[u.vertex]);
+                    }
+                }
+            }
+
+            System.out.print("dist[]: ");
+            for (int i = 1; i <= V; i++) System.out.print(toChar(i) + "=" + (dist[i] == Integer.MAX_VALUE ? "∞" : dist[i]) + "  ");
+            System.out.println();
+
+            System.out.print("hPos[]: ");
+            for (int i = 1; i <= V; i++) System.out.print(toChar(i) + "=" + hPos[i] + "  ");
+            System.out.println();
+
+            System.out.print("parent[]: ");
+            for (int i = 1; i <= V; i++) System.out.print(toChar(i) + "=" + toChar(parent[i]) + "  ");
+            System.out.println("\n");
+        }
+
+        // Copy parent array to mst[] for use in showMST()
+        for (v = 1; v <= V; v++) {
+            mst[v] = parent[v];
+        }
         
-                  		
+        System.out.print("\nThere are " + V + " vertices and " + E + " edges in the input graph\n");
+        System.out.print("After running Prim’s MST Algorithm on Adjacency Lists: \n");
+        System.out.print("Weight of MST = " + wgtSum + "\n");
+        System.out.print("Number of vertices connected in MST = " + V + "\n");
+        System.out.print("Number of edges in MST = " + totalEdgesInMst + " (should be equal to V - 1)" + "\n");
 	}
     
     public void showMST() {
-            System.out.print("\n\nMinimum Spanning tree parent array is:\n");
-            for(int v = 1; v <= V; ++v)
-                System.out.println(toChar(v) + " -> " + toChar(mst[v]));
-            System.out.println("");
+        System.out.print("\nEdges in Minimum Spanning Tree (parent -> child):\n");
+    
+        for (int v = 1; v <= V; ++v) {
+            int p = mst[v];
+            
+            if (p != 0) { 
+                // Find edge weight from p to v in adjacency list
+                int weight = -1;
+                for (Node n = adj[p]; n != z; n = n.next) {
+                    if (n.vertex == v) {
+                        weight = n.wgt;
+                        break;
+                    }
+                }
+    
+                System.out.println(toChar(p) + " --(" + weight + ")--> " + toChar(v));
+            }
+        }
     }
+    
 
     public void SPT_Dijkstra(int s) {
+        int v, d;
 
+        // Stores best known distance from s to every vertex
+        int[] dist = new int[V + 1];
+
+        // Stores the predecessor on the shortest path for each vertex
+        int[] parent = new int[V + 1]; 
+
+        // Position of vertex in the heap
+        int[] hPos = new int[V + 1];
+        Node u;
+
+        // Initialize dist, parent, and hPos arrays (1-indexed arrays)
+        for (v = 1; v <= V; ++v) {
+            dist[v] = Integer.MAX_VALUE;
+            parent[v] = 0;
+            hPos[v] = 0;
+        }
+        
+        // Distance to root s is 0
+        dist[s] = 0;
+
+        Heap h =  new Heap(V, dist, hPos);
+
+        // Start from vertex s
+        h.insert(s);
+
+        System.out.println("\nStarting SPT Dijkstra's algorithm: \n");
+        System.out.println("Start from source vertex: " + toChar(s) + 
+                           ", dist = " + dist[s] + 
+                           ", hPos[s] = " + hPos[s]);
+        
+        while (!h.isEmpty()) {
+
+            // pop the vertex with minimal distance from source from the heap
+            v = h.remove();
+            
+            System.out.println("Removed from heap: " + "vertex " + toChar(v) + 
+                           ", dist = " + dist[v]);
+            
+            // For each neighbor u of v
+            for (u = adj[v]; u != z; u = u.next) {
+                d = u.wgt;
+                if (dist[v] + d < dist[u.vertex]) {
+                    dist[u.vertex] = dist[v] + d;
+                    parent[u.vertex] = v;
+                
+                    // Not yet in heap
+                    if (hPos[u.vertex] == 0) {
+                        h.insert(u.vertex);
+                    } else {
+                        // if in the heap, should be sifted up since the priority was updated by new minimal weight
+                        System.out.println("Called siftUp() on vertex: " + toChar(u.vertex));
+                        h.siftUp(hPos[u.vertex]);
+                    }
+                }
+            }
+
+            System.out.print("dist[]: ");
+            for (int i = 1; i <= V; i++) System.out.print(toChar(i) + "=" + (dist[i] == Integer.MAX_VALUE ? "∞" : dist[i]) + "  ");
+            System.out.println();
+
+            System.out.print("hPos[]: ");
+            for (int i = 1; i <= V; i++) System.out.print(toChar(i) + "=" + hPos[i] + "  ");
+            System.out.println();
+
+            System.out.print("parent[]: ");
+            for (int i = 1; i <= V; i++) System.out.print(toChar(i) + "=" + toChar(parent[i]) + "  ");
+            System.out.println("\n");
+        }
+
+        System.out.println("\nShortest Path Tree as it is built is:\n");
+        System.out.printf("%-8s %-8s %-15s\n", "Vertex", "Parent", "Distance from " + toChar(s));
+
+        for (int i = 1; i <= V; i++) {
+            System.out.printf("%-8s %-8s %-15s\n", 
+                            toChar(i), 
+                            (parent[i] == 0 ? "-" : toChar(parent[i])), 
+                            (dist[i] == Integer.MAX_VALUE ? "∞" : dist[i]));
+        }
     }
-
 }
 
 public class GraphSolution {
@@ -488,7 +656,14 @@ public class GraphSolution {
         g.breadthFirst(s);
         g.displayTraversalTree(s);
         System.out.print("\nTime complexity: O(V + E), Space complexity: O(V)\n"); 
-       //g.MST_Prim(s);   
-       //g.SPT_Dijkstra(s);               
+        
+        System.out.print("\n3) Preparing for running Prim’s MST Algorithm on Adjacency Lists\n"); 
+        g.MST_Prim(s);   
+        g.showMST();
+        System.out.print("\nTime complexity: O(E log V), Space complexity: O(V + E)\n"); 
+
+        System.out.print("\n4) Preparing for running Dijkstra's Shortest Path Tree Algorithm on Adjacency Lists\n"); 
+        g.SPT_Dijkstra(s);  
+        System.out.print("\nTime complexity: O(V + E log V), Space complexity: O(V + E)\n");              
     }
 }
