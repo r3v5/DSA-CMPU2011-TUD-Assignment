@@ -168,7 +168,7 @@ class Graph {
             this.wgt = wgt;
             this.next = next;
         }
-    }
+    } 
     
     // V = number of vertices
     private int V;
@@ -294,6 +294,7 @@ class Graph {
             colour[u] = C.White;
             System.out.print("\nVertex " + toChar(u) + " is marked as White\n");
             parent[u] = 0;
+            System.out.print("Parent of Vertex " + toChar(u) + " is assigned to " + parent[u] + "\n");            
         }
 
         System.out.print("\nStarting Depth First Graph Traversal Cormen's version\n");
