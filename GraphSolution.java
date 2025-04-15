@@ -137,11 +137,11 @@ class Heap {
     }
 
     public int remove() {   
-        // Save the root (min)
-        int v = a[1];
+        // Place the root (min) into dummy position by index 0
+        a[0] = a[1];
 
         // v is no longer in heap
-        hPos[v] = 0;
+        hPos[a[0]] = 0;
     
         // Move last element to root and shrink heap
         a[1] = a[N--];
@@ -153,7 +153,7 @@ class Heap {
             siftDown(1);
         }
 
-        return v;
+        return a[0];
     }
 }
 
@@ -454,7 +454,7 @@ class Graph {
 
         System.out.println("\nStarting MST Prim’s algorithm: \n");
         System.out.println("Start from source vertex: " + toChar(s) + 
-                           ", dist = " + dist[s] + 
+                           ", dist = " + dist[s] +
                            ", hPos[s] = " + hPos[s] +
                            ", current total MST weight = " + wgtSum);
         
@@ -475,7 +475,7 @@ class Graph {
             }
 
             System.out.println("Removed from heap: " + "vertex " + toChar(v) + 
-                           ", dist = " + dist[v] + 
+                           ", dist = " + dist[v] + " (if priority is negative, it means vertex is already in MST)" +
                            ", current total MST weight = " + wgtSum);
             
             // For each neighbor u of v
@@ -547,6 +547,7 @@ class Graph {
 
     public void SPT_Dijkstra(int s) {
         int v, d;
+        int totalEdgesInSpt = 0;
 
         // Stores best known distance from s to every vertex
         int[] dist = new int[V + 1];
@@ -582,10 +583,14 @@ class Graph {
 
             // pop the vertex with minimal distance from source from the heap
             v = h.remove();
+
+            if (v != s) {
+                ++totalEdgesInSpt;
+            }
             
             System.out.println("Removed from heap: " + "vertex " + toChar(v) + 
                            ", dist = " + dist[v]);
-            
+
             // For each neighbor u of v
             for (u = adj[v]; u != z; u = u.next) {
                 d = u.wgt;
@@ -617,6 +622,9 @@ class Graph {
             System.out.println("\n");
         }
 
+        System.out.print("After running Dijkstra’s SPT Algorithm on Adjacency Lists: \n");
+        System.out.print("Number of vertices connected in SPT = " + V + "\n");
+        System.out.print("Number of edges in SPT = " + totalEdgesInSpt + " (should be equal to V - 1)" + "\n");
         System.out.println("\nShortest Path Tree as it is built is:\n");
         System.out.printf("%-8s %-8s %-15s\n", "Vertex", "Parent", "Distance from " + toChar(s));
 
