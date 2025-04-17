@@ -338,7 +338,9 @@ class Graph {
     public void breadthFirst(int s) {
         int u;
         int currQueueSize;
-        int traversalLevel = 1;
+
+        // start from 0 because there is 0 edges to the source vertex
+        int traversalLevel = 0;
 
         // Mark all vertices as white at the beginning
         for (u = 1; u <= V; ++u) {
