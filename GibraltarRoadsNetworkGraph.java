@@ -1,33 +1,12 @@
 /*
- * I used these libraries to get the Gibraltar's roads network 
- 🧰 1. OSMnx
-📦 Library: osmnx
+Gibraltar's roads network graph
 
-🌍 Purpose: Download and manipulate OpenStreetMap road networks
+Graph properties:
+Vertices (V): 429
+Edges (E): 578
+Edge weight: Length of road segment in meters
 
-🛠️ Used for:
-
-Downloading the graph with ox.graph_from_place("Gibraltar", network_type='drive')
-
-Extracting geometry and attributes like road length
-
-🧠 2. NetworkX
-📦 Library: networkx
-
-🔧 Purpose: Work with graph data structures and algorithms
-
-🛠️ Used for:
-
-Extracting the largest connected component
-
-Relabeling nodes to consecutive integers
-
-Exporting edge lists with weights
-
-Library | Used For
-OSMnx | Downloading and building real-world road networks
-NetworkX | Graph operations like subgraphing, relabeling nodes
- */
+*/
 
 import java.io.*;
 import java.util.Scanner;
